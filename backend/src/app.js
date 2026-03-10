@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-app.use(express());
+app.use(express.json());
 
 app.use("/", (req, res) => {
   res.json("NoteHive API running");
