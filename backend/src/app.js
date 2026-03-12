@@ -6,9 +6,11 @@ const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("../src/middlewares/errorHandler");
 const userRoutes = require("./routes/userRoutes");
 const noteRoutes = require("./routes/noteRoutes");
+const limiter = require("./middlewares/rateLimiter");
 
 app.use(cors());
 app.use(express.json());
+app.use(limiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

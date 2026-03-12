@@ -9,8 +9,13 @@ const createNoteService = async (data, userId) => {
   return note;
 };
 
-const getNotesService = async (userId) => {
-  const notes = await Note.find({ user: userId }).sort({ createdAt: -1 });
+const getNotesService = async (userId, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
+
+  const notes = await Note.find({ user: userId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   return notes;
 };
@@ -46,9 +51,36 @@ const deleteNoteService = async (noteId, userId) => {
   return note;
 };
 
+const searchNotesService = async (query, userId) => {
+  const notes = await Note.find({
+    user: userId,
+    $text: { $search: query },
+  });
+
+  return notes;
+};
+
+const togglePinService = async (noteId, userId) => {
+  const note = await Note.findOne({ _id: noteId, user: userId });
+
+  if (!note) {
+    const error = new Error("Note not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  note.pinned = !note.pinned;
+
+  await note.save();
+
+  return note;
+};
+
 module.exports = {
   createNoteService,
   getNotesService,
   updateNoteService,
   deleteNoteService,
+  searchNotesService,
+  togglePinService,
 };
