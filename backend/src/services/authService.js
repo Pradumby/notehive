@@ -2,59 +2,68 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
-exports.registerUserService = async (data) => {
+const registerUserService = async (data) => {
   const { name, email, password } = data;
 
   if (!name || !email || !password) {
     throw new Error("All feilds are required");
   }
 
-  const existingUser = await User.findOne({ email });
+  const userExists = await User.findOne({ email });
 
-  if (existingUser) {
-    throw new Error("User is already exists");
+  if (userExists) {
+    const error = new Error("User already exists");
+    error.statusCode = 400;
+    throw error;
   }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
-  console.log(hashedPassword);
 
   const user = await User.create({
     name,
     email,
     password: hashedPassword,
   });
-
+  const token = await generateToken(user._id);
   return {
     _id: user._id,
     name: user.name,
     email: user.email,
-    token: generateToken(user._id),
+    token: token,
   };
 };
 
-exports.loginUserService = async (data) => {
+const loginUserService = async (data) => {
   const { email, password } = data;
   if (!email || !password) {
     throw new Error("All feilds are required");
   }
 
-  const user = User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (!user) {
-    throw new Error("Invalid email or password");
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
   }
 
-  const ismatch = bcrypt.compare(password, user.password);
+  const ismatch = await bcrypt.compare(password, user.password);
 
   if (!ismatch) {
-    throw new Error("Invalid email or password");
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
   }
+
+  const token = await generateToken(user._id);
 
   return {
     _id: user._id,
     name: user.name,
     email: user.email,
-    token: generateToken(user._id),
+    token: token,
   };
 };
+
+module.exports = { registerUserService, loginUserService };
