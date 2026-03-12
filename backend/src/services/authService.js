@@ -25,7 +25,12 @@ exports.registerUserService = async (data) => {
     password: hashedPassword,
   });
 
-  return user;
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    token: generateToken(user._id),
+  };
 };
 
 exports.loginUserService = async (data) => {
@@ -37,16 +42,19 @@ exports.loginUserService = async (data) => {
   const user = User.findOne({ email });
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new Error("Invalid email or password");
   }
 
   const ismatch = bcrypt.compare(password, user.password);
 
   if (!ismatch) {
-    throw new Error("Invalid credentials");
+    throw new Error("Invalid email or password");
   }
 
-  const token = generateToken(user._id);
-
-  return token;
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    token: generateToken(user._id),
+  };
 };
